@@ -1,0 +1,91 @@
+// manifest.json
+{
+  "manifest_version": 3,
+  "name": "ShareContent",
+  "version": "1.0",
+  "description": "Select content on a web page and share it on social networks",
+  "permissions": ["activeTab", "contextMenus", "scripting"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "icons": {
+    "48": "icon.png"
+  }
+}
+
+// background.js
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: "shareContent",
+    title: "Share this content",
+    contexts: ["selection"]
+  });
+});
+
+chrome.contextMenus.onClicked.addListener((info, tab) => {
+  if (info.menuItemId === "shareContent") {
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: showShareOptions,
+      args: [info.selectionText]
+    });
+  }
+});
+
+function showShareOptions(selectedText) {
+  document.addEventListener('click', function(event) {
+    const x = event.pageX;
+    const y = event.pageY;
+    const shareOptions = `
+      <div id="shareOptions" style="position: fixed; top: ${y}px; left: ${x}px; background: white; border: 1px solid #ccc; padding: 10px; z-index: 10000;">
+        <p>Share on:</p>
+        <button onclick="shareOn('Gmail', '${selectedText}')">Gmail</button>
+        <button onclick="shareOn('Facebook', '${selectedText}')">Facebook</button>
+        <button onclick="shareOn('Instagram', '${selectedText}')">Instagram</button>
+        <button onclick="shareOn('X', '${selectedText}')">X</button>
+        <button onclick="shareOn('Whatsapp', '${selectedText}')">Whatsapp</button>
+        <button onclick="document.getElementById('shareOptions').remove()">Close</button>
+      </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', shareOptions);
+  }, { once: true });
+}
+
+function shareOn(platform, text) {
+  let url = '';
+  switch(platform) {
+    case 'Gmail':
+      url = `https://mail.google.com/mail/?view=cm&fs=1&tf=1&body=${encodeURIComponent(text)}`;
+      break;
+    case 'Facebook':
+      url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(text)}`;
+      break;
+    case 'Instagram':
+      url = `https://www.instagram.com/?url=${encodeURIComponent(text)}`;
+      break;
+    case 'X':
+      url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+      break;
+    case 'Whatsapp':
+      url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`;
+      break;
+  }
+  window.open(url, '_blank');
+}
+
+// popup.html
+vi
+
+// Steps to install the extension:
+// 1. Create a new directory named "ShareContent"
+// 2. Save the manifest.json, popup.html, background.js files in the "ShareContent" directory
+// 3. Add an icon.png file (48x48 pixels) to the "ShareContent" directory
+// 4. Open Google Chrome and go to chrome://extensions/
+// 5. Enable "Developer mode" in the top right corner
+// 6. Click "Load unpacked" and select the "ShareContent" directory
+// 7. The ShareContent extension should now appear in your Chrome toolbar
+// 8. Select content on any web page, right-click, and choose "Share this content" to share it on social networks

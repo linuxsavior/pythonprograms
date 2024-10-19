@@ -1,0 +1,100 @@
+{
+  "manifest_version": 3,
+  "name": "LiveNewsUpdater",
+  "version": "1.0",
+  "description": "Get live news updates from CNN, Fox News, and NBC News",
+  "permissions": ["activeTab", "alarms", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "icons": {
+    "48": "icon.png"
+  }
+}
+
+// popup.html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>LiveNewsUpdater</title>
+  <style>
+    body { width: 300px; font-family: Arial, sans-serif; padding: 10px; }
+    #cnn, #fox, #nbc { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <div id="cnn">CNN: <span id="cnn-count">0</span> updates</div>
+  <div id="fox">Fox News: <span id="fox-count">0</span> updates</div>
+  <div id="nbc">NBC News: <span id="nbc-count">0</span> updates</div>
+  <script src="popup.js"></script>
+</body>
+</html>
+
+// popup.js
+document.addEventListener('DOMContentLoaded', function() {
+  if (chrome.storage) {
+    chrome.storage.local.get(['cnnCount', 'foxCount', 'nbcCount'], function(result) {
+      document.getElementById('cnn-count').textContent = result.cnnCount || 0;
+      document.getElementById('fox-count').textContent = result.foxCount || 0;
+      document.getElementById('nbc-count').textContent = result.nbcCount || 0;
+    });
+  } else {
+    console.error('chrome.storage is undefined');
+  }
+});
+
+// background.js
+let cnnCount = 0;
+let foxCount = 0;
+let nbcCount = 0;
+
+chrome.alarms.create('fetchNews', { periodInMinutes: 1 });
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'fetchNews') {
+    fetchNewsUpdates();
+  }
+});
+
+function fetchNewsUpdates() {
+  fetch('https://newsapi.org/v2/top-headlines?sources=cnn&apiKey=YOUR_API_KEY')
+    .then(response => response.json())
+    .then(data => {
+      if (data.articles.length > 0) {
+        cnnCount++;
+        chrome.storage.local.set({ cnnCount: cnnCount });
+      }
+    });
+
+  fetch('https://newsapi.org/v2/top-headlines?sources=fox-news&apiKey=YOUR_API_KEY')
+    .then(response => response.json())
+    .then(data => {
+      if (data.articles.length > 0) {
+        foxCount++;
+        chrome.storage.local.set({ foxCount: foxCount });
+      }
+    });
+
+  fetch('https://newsapi.org/v2/top-headlines?sources=nbc-news&apiKey=YOUR_API_KEY')
+    .then(response => response.json())
+    .then(data => {
+      if (data.articles.length > 0) {
+        nbcCount++;
+        chrome.storage.local.set({ nbcCount: nbcCount });
+      }
+    });
+}
+
+// Steps to install the extension:
+// 1. Create a new directory named "LiveNewsUpdater"
+// 2. Save the manifest.json, popup.html, popup.js, and background.js files in the "LiveNewsUpdater" directory
+// 3. Add an icon.png file (48x48 pixels) to the "LiveNewsUpdater" directory
+// 4. Open Google Chrome and go to chrome://extensions/
+// 5. Enable "Developer mode" in the top right corner
+// 6. Click "Load unpacked" and select the "LiveNewsUpdater" directory
+// 7. The LiveNewsUpdater extension should now appear in your Chrome toolbar
+// 8. Click on the LiveNewsUpdater icon to see the news update counts

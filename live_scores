@@ -1,0 +1,80 @@
+{
+  "manifest_version": 3,
+  "name": "FoodSearch",
+  "version": "1.0",
+  "description": "Find restaurants that serve your favorite food within a specified miles range",
+  "permissions": ["activeTab", "storage"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon.png"
+  },
+  "icons": {
+    "48": "icon.png"
+  }
+}
+
+// popup.html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FoodSearch</title>
+  <style>
+    body { width: 300px; font-family: Arial, sans-serif; padding: 10px; }
+    #food, #zip, #miles { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <div>
+    <label for="food">Food:</label>
+    <input type="text" id="food" name="food">
+  </div>
+  <div>
+    <label for="zip">Zip Code:</label>
+    <input type="text" id="zip" name="zip">
+  </div>
+  <div>
+    <label for="miles">Miles Range:</label>
+    <input type="number" id="miles" name="miles">
+  </div>
+  <button id="search">Search</button>
+  <div id="results"></div>
+  <script src="popup.js"></script>
+</body>
+</html>
+
+// popup.js
+document.addEventListener('DOMContentLoaded', function() {
+  const searchButton = document.getElementById('search');
+  const resultsDiv = document.getElementById('results');
+
+  searchButton.addEventListener('click', function() {
+    const food = document.getElementById('food').value;
+    const zip = document.getElementById('zip').value;
+    const miles = document.getElementById('miles').value;
+
+    if (food && zip && miles) {
+      const url = `https://www.google.com/search?q=${food}+restaurants+within+${miles}+miles+of+${zip}`;
+      chrome.tabs.create({ url: url });
+    } else {
+      resultsDiv.textContent = 'Please enter all required fields.';
+    }
+  });
+});
+
+// background.js
+chrome.runtime.onInstalled.addListener(() => {
+  console.log('FoodSearch extension installed');
+});
+
+// Steps to install the extension:
+// 1. Create a new directory named "FoodSearch"
+// 2. Save the manifest.json, popup.html, popup.js, and background.js files in the "FoodSearch" directory
+// 3. Add an icon.png file (48x48 pixels) to the "FoodSearch" directory
+// 4. Open Google Chrome and go to chrome://extensions/
+// 5. Enable "Developer mode" in the top right corner
+// 6. Click "Load unpacked" and select the "FoodSearch" directory
+// 7. The FoodSearch extension should now appear in your Chrome toolbar
+// 8. Click on the FoodSearch icon to search for restaurants
